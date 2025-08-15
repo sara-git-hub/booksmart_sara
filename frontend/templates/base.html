@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Booksmart{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.3/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+
+    <!-- Navbar simple -->
+    <nav class="bg-blue-700 text-white px-6 py-3 flex justify-between items-center">
+    <!-- Logo -->
+    <a href="/api/home" class="text-xl font-bold flex items-center gap-2">
+        📚 Booksmart
+    </a>
+
+    <!-- Barre de recherche -->
+    <form action="/api/livres" method="get" class="flex items-center">
+        <input type="text" name="search" placeholder="Rechercher un livre..."
+               class="px-3 py-1 rounded-l border border-gray-300 text-black focus:outline-none"
+               value="{{ request.query_params.get('search', '') }}">
+        <button type="submit" class="bg-yellow-500 px-3 py-1 rounded-r hover:bg-yellow-600">
+            🔍
+        </button>
+    </form>
+
+    <!-- Liens -->
+    <div class="flex items-center space-x-4">
+        <a href="/api/home" class="hover:text-gray-200">Accueil</a>
+        {% if request.session.get('user_id') %}
+            <span class="px-2 py-1 bg-yellow-200 text-black rounded">Bonjour, {{ request.session.get('user_nom') }}</span>
+            <a href="/api/logout" class="px-2 py-1 bg-red-500 rounded hover:bg-red-600">Déconnexion</a>
+        {% else %}
+            <a href="/api/login" class="px-2 py-1 bg-green-500 rounded hover:bg-green-600">Connexion</a>
+            <a href="/api/register" class="px-2 py-1 bg-blue-500 rounded hover:bg-blue-600">S'inscrire</a>
+        {% endif %}
+    </div>
+</nav>
+
+    <!-- Contenu -->
+    <class="p-6 w-full">
+        {% block content %}{% endblock %}
+    </main>
+
+</body>
+</html>

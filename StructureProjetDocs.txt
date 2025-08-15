@@ -1,0 +1,62 @@
+booksmart/
+│
+├── backend/
+│   ├── main.py                   # Point d'entrée FastAPI
+│   ├── database.py               # Connexion PostgreSQL
+│   ├── models.py                 # Tables SQLAlchemy
+│   ├── schemas.py                # Schémas Pydantic
+│   ├── crud.py                   # Fonctions d'accès aux données
+│   ├── config.py                 # configuration centralisée
+│   ├── scraping/
+│   │   └── scrap_books_toscrape.py  # Script Selenium
+│   ├── recommender/
+│   │   ├── recommender.py        # Modèle TF-IDF + similarité cosinus
+│   │   └── model.pkl             # Modèle sauvegardé
+│   ├── routes/
+│   │   ├── users.py              # Inscription / connexion
+│   │   ├── livres.py             # Recherche / consultation / stock
+│   │   ├── reservations.py       # Réservations et emprunts
+│   │   ├── admin.py              # Gestion admin
+│   │   ├── stats.py              # Statistiques
+│   │   └── recommandations.py    # Suggestions
+│   └── utils.py                  # Fonctions utilitaires
+│
+├── frontend/
+│   ├── templates/
+│   │   ├── base.html
+│   │   ├── home.html
+│   │   ├── inscription.html
+│   │   ├── login.html
+│   │   ├── livre.html
+│   │   ├── profil.html
+│   │   ├── recommandation-par-description.html
+│   │   ├── admin/
+│   │   │   ├── gestion-adherents.html
+│   │   │   ├── gestion-livres.html
+│   │   │   ├── emprunts.html
+│   │   │   ├── statistiques.html
+│   │   │   └── reservations.html
+│   ├── static/
+│   │   ├── css/
+│   │   │   ├── style.css
+│   │   │   └── tailwind.css
+│   │   ├── js/
+│   │   │   ├── main.js
+│   │   │   └── chart.js
+│   │   └── images/
+│
+├── data/
+│   ├── livres_bruts.csv          # Données scrapées
+│   ├── livres_nettoyes.csv       # Données nettoyées
+│   └── sauvegardes/              # Backups DB
+│
+├── tests/
+│   ├── test_auth.py
+│   ├── test_livres.py
+│   ├── test_recommandations.py
+│   └── test_scraping.py
+│
+├── .env                          # Variables d'environnement (DB, secrets)
+├── requirements.txt              # Dépendances Python
+├── README.md                     # Documentation projet
+└── run.sh                        # Script lancement local

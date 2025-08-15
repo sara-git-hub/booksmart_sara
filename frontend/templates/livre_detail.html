@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}{{ livre.titre }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto p-4 max-w-4xl">
+    <div class="bg-white p-6 rounded shadow">
+        <div class="flex gap-6">
+            <!-- Image du livre -->
+            <img src="{{ livre.image_url }}" alt="{{ livre.titre }}" class="w-64 h-80 object-cover rounded">
+
+            <!-- Infos du livre -->
+            <div class="flex-1">
+                <h1 class="text-2xl font-bold mb-2">{{ livre.titre }}</h1>
+                <p class="mb-1"><span class="font-medium">Auteur:</span> {{ livre.auteur }}</p>
+                <p class="mb-1"><span class="font-medium">Rating:</span> {{ livre.rating }}</p>
+                <p class="mb-1"><span class="font-medium">Prix:</span> {{ livre.prix }} €</p>
+                <p class="mb-2">
+                    <span class="font-medium">Statut:</span>
+                    {% if livre.stock > 0 %}
+                        <span class="text-green-600 font-semibold">Disponible</span>
+                    {% else %}
+                        <span class="text-red-600 font-semibold">Réservé</span>
+                    {% endif %}
+                </p>
+
+                <!-- Bouton de réservation -->
+                {% if livre.stock > 0 %}
+                <form action="/api/reserver/{{ livre.id }}" method="post">
+                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                        Réserver ce livre
+                    </button>
+                </form>
+                {% else %}
+                <span class="text-gray-500 italic">Ce livre n'est pas disponible pour le moment.</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Description du livre -->
+        {% if livre.description %}
+        <div class="mt-4">
+            <h2 class="text-xl font-semibold mb-2">Description</h2>
+            <p>{{ livre.description }}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

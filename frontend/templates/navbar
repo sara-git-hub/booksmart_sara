@@ -1,0 +1,36 @@
+<!-- templates/navbar.html -->
+<nav class="bg-blue-700 text-white px-6 py-3 shadow-md">
+  <div class="flex justify-between items-center">
+    <!-- Logo -->
+    <div class="text-xl font-bold">
+      📚 BookSmart
+    </div>
+
+
+        <!-- Barre de recherche -->
+    <form action="api/home" method="get" class="flex items-center bg-white rounded overflow-hidden">
+      <input 
+        type="text" 
+        name="search" 
+        placeholder="Rechercher un livre..." 
+        class="px-3 py-1 text-gray-700 focus:outline-none"
+        value="{{ request.query_params.get('search', '') }}"
+      >
+      <button type="submit" class="bg-blue-500 px-3 py-1 hover:bg-blue-600 text-white">
+        🔍
+      </button>
+    </form>
+    
+    <!-- Menu principal -->
+    <div class="flex space-x-6">
+      <a href="api/home" class="hover:text-gray-200">Accueil</a>
+
+      
+      {% if user_is_authenticated %}
+        <a href="api/logout" class="text-red-300 hover:text-red-400">Déconnexion</a>
+      {% else %}
+        <a href="api/login" class="text-blue-200 hover:text-blue-300">Connexion</a>
+      {% endif %}
+    </div>
+  </div>
+</nav>
