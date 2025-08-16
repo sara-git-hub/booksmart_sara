@@ -9,10 +9,17 @@ router = APIRouter(
 
 @router.post("/reservations")
 async def create_reservation(
-    id_adherent: int = Form(...),
-    id_livre: int = Form(...),
+    request: Request,
+    id_livre: int = Form(...),  # seul le livre reste en formulaire
     db: Session = Depends(database.get_db)
 ):
+    # Récupérer l'utilisateur depuis la session
+    user = crud.get_current_user(request, db)
+    if not user:
+        raise HTTPException(status_code=401, detail="Utilisateur non connecté")
+
+    id_adherent = user.id
+
     # Vérifier si le livre est déjà réservé par cet adhérent
     existing_reservation = db.query(models.Reservation).filter_by(
         id_adherent=id_adherent, id_livre=id_livre

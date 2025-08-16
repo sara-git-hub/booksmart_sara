@@ -66,6 +66,15 @@ app.include_router(livres.router)
 # Inclusion du routeur des réservations
 app.include_router(reservations.router)
 
+# Inclusion du routeur des recommandations
+app.include_router(recommandations.router)
+
+# Inclusion du routeur des statistiques
+app.include_router(stats.router)
+
+# Inclusion du routeur d'administration
+app.include_router(admin.router)    
+
 # Route de test
 @app.get("/")
 async def root():

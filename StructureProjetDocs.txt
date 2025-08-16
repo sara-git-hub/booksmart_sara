@@ -27,6 +27,7 @@ booksmart/
 │   │   ├── home.html
 │   │   ├── inscription.html
 │   │   ├── login.html
+│   │   ├── livre_detail.html
 │   │   ├── livre.html
 │   │   ├── profil.html
 │   │   ├── recommandation-par-description.html

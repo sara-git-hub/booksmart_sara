@@ -1,11 +1,18 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field,field_validator
 from typing import Optional, List
 from datetime import date
+import re
 
 # Adherent (utilisateur)
 class AdherentBase(BaseModel):
     nom: str = Field(..., example="Ahmed Benali")
     email: EmailStr
+
+    @field_validator("nom")
+    def nom_sans_chiffres(cls, v):
+        if re.search(r'\d', v):
+            raise ValueError("Le nom ne peut pas contenir de chiffres")
+        return v
 
 class AdherentCreate(AdherentBase):
     password: str = Field(..., min_length=6)

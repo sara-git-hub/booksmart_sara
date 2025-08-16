@@ -14,10 +14,10 @@ class Adherent(Base):
     role = Column(String(50), default="adherent")
     date_inscription = Column(TIMESTAMP, default=datetime.now)
 
-    emprunts = relationship("Emprunt", back_populates="adherent")
-    reservations = relationship("Reservation", back_populates="adherent")
-    historique = relationship("HistoriqueEmprunt", back_populates="adherent")
-    notifications = relationship("Notification", back_populates="adherent")
+    emprunts = relationship("Emprunt", back_populates="adherent",cascade="all, delete-orphan")
+    reservations = relationship("Reservation", back_populates="adherent",cascade="all, delete-orphan")
+    historique = relationship("HistoriqueEmprunt", back_populates="adherent",cascade="all, delete-orphan")
+    notifications = relationship("Notification", back_populates="adherent",cascade="all, delete-orphan")
 
 
 class Livre(Base):
@@ -31,9 +31,9 @@ class Livre(Base):
     stock = Column(Integer, default=1)
     rating = Column(Integer)
 
-    emprunts = relationship("Emprunt", back_populates="livre")
-    reservations = relationship("Reservation", back_populates="livre")
-    historique = relationship("HistoriqueEmprunt", back_populates="livre")
+    emprunts = relationship("Emprunt", back_populates="livre",cascade="all, delete-orphan")
+    reservations = relationship("Reservation", back_populates="livre",cascade="all, delete-orphan")
+    historique = relationship("HistoriqueEmprunt", back_populates="livre",cascade="all, delete-orphan")
 
 
 class Emprunt(Base):

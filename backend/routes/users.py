@@ -106,10 +106,37 @@ async def logout(request: Request):
     request.session.clear()
     return RedirectResponse(url="/api/login?message=deconnecte", status_code=303)
 
-@router.get("/home", response_class=HTMLResponse)
+@router.get("/home")
 def home(request: Request, db: Session = Depends(database.get_db)):
-    livres = livres = crud.get_livres(db, "")
-    return templates.TemplateResponse("home.html", {"request": request, "livres": livres, "user": Depends(get_current_user)})
+    # Récupérer l'ID de l'utilisateur depuis la session
+    user_id = request.session.get("user_id")
+    user = None
 
+    if user_id:
+        user = db.query(models.Adherent).filter(models.Adherent.id == user_id).first()
+
+    # Récupérer tous les livres
+    livres = db.query(models.Livre).all()
+
+    return templates.TemplateResponse(
+        "home.html",
+        {"request": request, "livres": livres, "user": user}
+    )
+
+@router.get("/mes-emprunts")
+async def mes_emprunts(request: Request, db: Session = Depends(database.get_db)):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Utilisateur non connecté")
+
+    emprunts = db.query(models.Emprunt).filter_by(id_adherent=user_id).all()
+    return {"emprunts": [
+        {
+            "titre": e.livre.titre,
+            "date_emprunt": e.date_emprunt.strftime("%d/%m/%Y"),
+            "date_retour_prevue": e.date_retour_prevue.strftime("%d/%m/%Y"),
+            "en_retard": datetime.utcnow() > e.date_retour_prevue
+        } for e in emprunts
+    ]}
 
 

@@ -2,6 +2,8 @@ from sqlalchemy.orm import Session
 from backend import models, schemas
 from passlib.context import CryptContext
 from datetime import datetime
+from fastapi import Request, HTTPException, Depends
+
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -18,6 +20,12 @@ def hash_password(password: str) -> str:
 # Vérifier le mot de passe
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
+
+def get_current_user(request: Request, db: Session) -> "models.Adherent | None":
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return None
+    return db.query(models.Adherent).filter(models.Adherent.id == user_id).first()
 
 # Créer un nouvel adhérent
 def create_adherent(db: Session, adherent: schemas.AdherentCreate):

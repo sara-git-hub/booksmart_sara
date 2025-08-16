@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold mb-4">Recommandation par description</h1>
+
+    <!-- Formulaire de saisie -->
+    <form method="post" action="/api/recommander-par-description" class="mb-6">
+        <textarea 
+            name="description" 
+            placeholder="Décrivez le livre que vous cherchez…" 
+            required
+            class="w-full border p-2 rounded mb-2">{{ description }}</textarea>
+        <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+            Obtenir des suggestions
+        </button>
+    </form>
+
+    <!-- Message d'erreur -->
+    {% if error %}
+        <p class="text-red-500 mb-4">{{ error }}</p>
+    {% endif %}
+
+    <!-- Suggestions -->
+    {% if suggestions %}
+        <h2 class="text-xl font-semibold mb-2">Suggestions :</h2>
+        <ul class="space-y-2">
+            {% for livre in suggestions %}
+                <li class="border p-2 rounded shadow hover:bg-gray-50">
+                    <strong>{{ livre.titre }}</strong> par {{ livre.auteur }}<br>
+                    Prix : {{ livre.prix }} €
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</div>
+{% endblock %}
