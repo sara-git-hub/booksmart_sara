@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Gestion des livres{% endblock %}
+
+{% block content %}
+<h1 class="text-3xl font-bold mb-6">Gestion des livres</h1>
+
+<!-- Formulaire de recherche -->
+<form method="get" action="/admin/gestion-livres" class="mb-4">
+    <input type="text" name="search" placeholder="Rechercher un livre..."
+           value="{{ search }}" class="border px-2 py-1 rounded">
+    <button type="submit" class="bg-blue-500 text-white px-3 py-1 rounded">Rechercher</button>
+</form>
+
+<!-- Liste des livres -->
+<table class="table-auto w-full border-collapse border border-gray-300">
+    <thead>
+        <tr class="bg-gray-200">
+            <th class="border px-2 py-1">ID</th>
+            <th class="border px-2 py-1">Titre</th>
+            <th class="border px-2 py-1">Prix</th>
+            <th class="border px-2 py-1">Stock</th>
+            <th class="border px-2 py-1">Description</th>
+            <th class="border px-2 py-1">Image URL</th>
+            <th class="border px-2 py-1">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for livre in livres %}
+        <tr>
+            <td class="border px-2 py-1">{{ livre.id }}</td>
+            <td class="border px-2 py-1">{{ livre.titre }}</td>
+            <td class="border px-2 py-1">{{ livre.prix }}</td>
+            <td class="border px-2 py-1">{{ livre.stock }}</td>
+            <td class="border px-2 py-1">{{ livre.description }}</td>
+            <td class="border px-2 py-1">{{ livre.image_url }}</td>
+            <td class="border px-2 py-1">
+                <!-- Modifier -->
+                <button class="bg-yellow-500 text-white px-2 py-1 rounded modify-btn"
+                        data-id="{{ livre.id }}"
+                        data-titre="{{ livre.titre }}"
+                        data-prix="{{ livre.prix }}"
+                        data-stock="{{ livre.stock }}"
+                        data-description="{{ livre.description }}"
+                        data-image_url="{{ livre.image_url }}">
+                    Modifier
+                </button>
+
+                <!-- Supprimer -->
+                <form method="get" action="/admin/livres/delete/{{ livre.id }}" style="display:inline-block"
+                      onsubmit="return confirm('Voulez-vous vraiment supprimer ce livre ?');">
+                    <button type="submit" class="bg-red-500 text-white px-2 py-1 rounded">Supprimer</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Modal pour modifier un livre -->
+<div id="modifyModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center">
+    <div class="bg-white p-6 rounded shadow-lg w-96">
+        <h2 class="text-xl font-bold mb-4">Modifier le livre</h2>
+        <form id="modifyForm" method="post">
+            <input type="hidden" name="livre_id" id="modal-livre-id">
+            <label class="block mb-2">Titre</label>
+            <input type="text" name="titre" id="modal-titre" class="border px-2 py-1 w-full mb-2">
+            <label class="block mb-2">Prix</label>
+            <input type="number" step="0.01" name="prix" id="modal-prix" class="border px-2 py-1 w-full mb-2">
+            <label class="block mb-2">Stock</label>
+            <input type="number" name="stock" id="modal-stock" class="border px-2 py-1 w-full mb-2">
+            <label class="block mb-2">Description</label>
+            <textarea name="description" id="modal-description" class="border px-2 py-1 w-full mb-2"></textarea>
+            <label class="block mb-2">Image URL</label>
+            <input type="text" name="image_url" id="modal-image_url" class="border px-2 py-1 w-full mb-2">
+            <div class="flex justify-end gap-2 mt-4">
+                <button type="button" onclick="closeModifyModal()" class="px-3 py-1 rounded bg-gray-300">Annuler</button>
+                <button type="submit" class="px-3 py-1 rounded bg-blue-500 text-white">Modifier</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+const modifyModal = document.getElementById('modifyModal');
+const modifyForm = document.getElementById('modifyForm');
+
+document.querySelectorAll('.modify-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        // Récupérer les données depuis data-*
+        document.getElementById('modal-livre-id').value = btn.dataset.id;
+        document.getElementById('modal-titre').value = btn.dataset.titre;
+        document.getElementById('modal-prix').value = btn.dataset.prix;
+        document.getElementById('modal-stock').value = btn.dataset.stock;
+        document.getElementById('modal-description').value = btn.dataset.description;
+        document.getElementById('modal-image_url').value = btn.dataset.image_url;
+
+        modifyForm.action = `/admin/livres/modify/${btn.dataset.id}`;
+        modifyModal.classList.remove('hidden');
+        modifyModal.classList.add('flex');
+    });
+});
+
+function closeModifyModal() {
+    modifyModal.classList.add('hidden');
+    modifyModal.classList.remove('flex');
+}
+</script>
+
+{% endblock %}

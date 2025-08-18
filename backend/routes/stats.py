@@ -1,32 +1,37 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Response,Request, Form
-from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
+from fastapi import APIRouter, Request, Depends
 from sqlalchemy.orm import Session
-from backend import schemas, crud, database,models
+from sqlalchemy import func
+from backend import database, models,crud
 from backend.config import templates
+from fastapi.responses import JSONResponse
 
-# Routeur pour les statistiques
-router = APIRouter(
-    prefix="/api",
-    tags=["statistiques"])
-
+router = APIRouter(prefix="/admin", tags=["stats"],dependencies=[Depends(crud.admin_required)])
 
 @router.get("/statistiques")
-async def statistiques(request: Request, db: Session = Depends(database.get_db)):
-    # 5 livres les plus empruntés
-    top_livres = db.query(models.Livre).join(models.Emprunt).group_by(models.Livre.id).order_by(models.func.count(models.Emprunt.id).desc()).limit(5).all()
+async def page_stats(request: Request):
+    return templates.TemplateResponse("admin/statistiques.html", {"request": request})
 
-    # Taux de disponibilité global
-    total_livres = db.query(models.Livre).count()
-    livres_disponibles = db.query(models.Livre).filter(models.Livre.stock > 0).count()
-    taux_dispo = (livres_disponibles / total_livres * 100) if total_livres > 0 else 0
+@router.get("/statistiques/data")
+async def stats_data(db: Session = Depends(database.get_db)):
+    # Top 5 livres les plus empruntés
+    top = (db.query(models.Livre.titre, func.count(models.Emprunt.id).label("nb"))
+             .join(models.Emprunt, models.Emprunt.id_livre == models.Livre.id)
+             .group_by(models.Livre.id).order_by(func.count(models.Emprunt.id).desc()).limit(5).all())
 
-    # Nombre de retards
-    retards = db.query(models.Emprunt).filter(models.Emprunt.date_retour < models.Emprunt.date_emprunt).count()  # Exemple simple
+    # Taux de disponibilité global (sum stock / count livres)
+    total_livres = db.query(func.count(models.Livre.id)).scalar() or 0
+    livres_disponibles = db.query(func.count(models.Livre.id)).filter(models.Livre.stock > 0).scalar() or 0
+    taux_dispo = (livres_disponibles / total_livres) if total_livres else 0
 
-    return templates.TemplateResponse("admin/statistiques.html", {
-        "request": request,
-        "top_livres": top_livres,
+    # Nombre de retards (retour_effectif null et date_retour_prevue < today)
+    from datetime import date
+    retards = db.query(models.Emprunt).filter(
+        models.Emprunt.date_retour_effectif == None,
+        models.Emprunt.date_retour_prevue < date.today()
+    ).count()
+
+    return JSONResponse({
+        "top": [{"titre": t[0], "nb": t[1]} for t in top],
         "taux_dispo": taux_dispo,
         "retards": retards
     })

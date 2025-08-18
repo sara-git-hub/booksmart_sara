@@ -1,51 +1,29 @@
 {% extends "base.html" %}
-
 {% block title %}Livre Détails{% endblock %}
-
 {% block content %}
-
-
-<div class="bg-gray-100 p-6">
-
-  <div class="max-w-4xl mx-auto bg-white p-6 rounded shadow">
-    <!-- Titre et image -->
-    <div class="flex flex-col md:flex-row items-start md:items-center mb-6">
-      <img src="{{ livre.image_url }}" alt="{{ livre.titre }}" class="w-48 h-auto rounded mr-6 mb-4 md:mb-0">
-      <div>
-        <h1 class="text-lg font-semibold mb-2 truncate w-full overflow-hidden whitespace-nowrap" title="{{ livre.titre }}">
-            {{ livre.titre }}
-        </h1>
-        <p class="text-gray-700 mb-2">{{ livre.description }}</p>
-        <p class="text-lg font-semibold mb-1">Prix : {{ livre.prix }} €</p>
-        <p class="text-md mb-1">Disponibilité : 
-          {% if livre.stock > 0 %}
-            <span class="text-green-600 font-bold">Disponible</span>
-          {% else %}
-            <span class="text-red-600 font-bold">Indisponible</span>
-          {% endif %}
-        </p>
-        <p class="text-md">Note : {{ livre.rating }}/5</p>
-      </div>
-    </div>
-
-    {% if livre.stock > 0 %}
-        <form action="/api/reservations" method="post" class="mt-4">
-        <input type="hidden" name="id_livre" value="{{ livre.id }}">
-        <input type="hidden" name="id_adherent" value="{{ user.id }}">
-        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">
-            Réserver
-        </button>
-        </form>
-    {% else %}
-        <p class="text-red-600 font-semibold mt-4">Ce livre est déjà réservé.</p>
-    {% endif %}
-
-    <!-- Retour -->
-    <div class="mt-6">
-      <a href="/api/home" class="text-blue-600 hover:underline">&larr; Retour à la liste des livres</a>
+<div class="max-w-4xl mx-auto bg-white p-6 rounded shadow">
+  <div class="flex flex-col md:flex-row gap-6">
+    <img src="{{ livre.image_url }}" alt="{{ livre.titre }}" class="w-48 h-auto rounded">
+    <div>
+      <h1 class="text-xl font-semibold mb-2">{{ livre.titre }}</h1>
+      <p class="text-gray-700 mb-2">{{ livre.description }}</p>
+      <p class="font-semibold">Prix : {{ livre.prix }} €</p>
+      <p>Disponibilité :
+        {% if livre.stock > 0 %}<span class="text-green-600 font-bold">Disponible</span>
+        {% else %}<span class="text-red-600 font-bold">Indisponible</span>{% endif %}
+      </p>
     </div>
   </div>
 
-</div>
+  {% if user and livre.stock > 0 %}
+  <form action="/api/reservations" method="post" class="mt-4">
+    <input type="hidden" name="id_livre" value="{{ livre.id }}">
+    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Réserver</button>
+  </form>
+  {% endif %}
 
+  <div class="mt-6">
+    <a href="/api/livres" class="text-blue-600 hover:underline">&larr; Retour</a>
+  </div>
+</div>
 {% endblock %}

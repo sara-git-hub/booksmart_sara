@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+  <h1 class="text-2xl font-bold">Statistiques</h1>
+
+  <div class="bg-white p-4 rounded shadow">
+    <h2 class="font-semibold mb-2">Top 5 emprunts</h2>
+    <canvas id="chartTop" height="120"></canvas>
+  </div>
+
+  <div class="bg-white p-4 rounded shadow">
+    <h2 class="font-semibold mb-2">Indicateurs</h2>
+    <div id="kpis" class="grid grid-cols-2 gap-4"></div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  const res = await fetch("/admin/statistiques/data");
+  const data = await res.json();
+
+  // Chart Top
+  const ctx = document.getElementById('chartTop').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: data.top.map(x => x.titre),
+      datasets: [{
+        label: "Nombre d'emprunts",
+        data: data.top.map(x => x.nb),
+        backgroundColor: 'rgba(59, 130, 246, 0.7)', // Bleu Tailwind
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false }
+      }
+    }
+  });
+
+  // KPIs
+  document.getElementById('kpis').innerHTML = `
+    <div class="bg-green-100 text-green-800 p-4 rounded shadow">
+      <h3 class="font-bold">Taux de disponibilité</h3>
+      <p class="text-xl">${(data.taux_dispo * 100).toFixed(1)}%</p>
+    </div>
+    <div class="bg-red-100 text-red-800 p-4 rounded shadow">
+      <h3 class="font-bold">Retards</h3>
+      <p class="text-xl">${data.retards}</p>
+    </div>
+  `;
+});
+</script>
+{% endblock %}

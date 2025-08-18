@@ -4,7 +4,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from starlette.middleware.sessions import SessionMiddleware
-from backend.config import SECRET_KEY, templates
+from fastapi.staticfiles import StaticFiles
 
 
 from backend.utils import clean_all
@@ -13,7 +13,7 @@ from backend.recommender.recommender import modele_recommandation
 from backend.database import engine, Base
 from backend import models
 from backend.routes import admin, livres, recommandations, reservations, stats, users
-
+from backend.config import SECRET_KEY, templates
 
 
 # Création de l'application FastAPI
@@ -25,6 +25,9 @@ app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
 
 # Création de la base de données et des tables si elles n'existent pas
 Base.metadata.create_all(bind=engine)
+
+# Servir les fichiers statiques
+#app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Vérifier si la table "livres" contient déjà des livres
 with Session(engine) as session:

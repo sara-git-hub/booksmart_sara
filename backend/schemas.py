@@ -19,7 +19,7 @@ class AdherentCreate(AdherentBase):
 
 class AdherentOut(AdherentBase):
     id: int
-    role: str
+    role: str= "adherent"   #par defaut
     date_inscription: Optional[date]
 
     class Config:
@@ -28,13 +28,13 @@ class AdherentOut(AdherentBase):
 
 # Livre
 class LivreBase(BaseModel):
-    titre: str
-    prix: Optional[float]
-    description: Optional[str]
-    image_url: Optional[str]
-    stock: int
-    rating: Optional[int]
-
+    titre: str = Field(..., min_length=1)
+    prix: float = Field(0, ge=0)
+    description: str = ""
+    image_url: str = ""
+    stock: int = Field(..., ge=0)
+    rating: int = 0
+    
 class LivreOut(LivreBase):
     id: int
 

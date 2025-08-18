@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+  <div class="bg-white p-4 rounded shadow">
+    <h2 class="font-semibold mb-2">Nouvel emprunt</h2>
+    <form method="post" action="/admin/emprunts" class="flex gap-2 flex-wrap">
+      <select name="id_adherent" class="border p-1 rounded">
+        {% for a in adherents %}<option value="{{ a.id }}">{{ a.nom }} ({{ a.email }})</option>{% endfor %}
+      </select>
+      <select name="id_livre" class="border p-1 rounded">
+        {% for l in livres %}<option value="{{ l.id }}">{{ l.titre }} — stock {{ l.stock }}</option>{% endfor %}
+      </select>
+      <button class="bg-blue-600 text-white px-3 py-1 rounded">Enregistrer</button>
+    </form>
+  </div>
+
+  <div class="bg-white p-4 rounded shadow">
+    <h2 class="font-semibold mb-2">Enregistrer un retour</h2>
+    <form method="post" action="/admin/retours" class="flex gap-2 flex-wrap">
+      <select name="emprunt_id" class="border p-1 rounded">
+        {% for e in emprunts if not e.date_retour_effectif %}
+          <option value="{{ e.id }}">Emprunt #{{ e.id }} — Livre {{ e.id_livre }} — Adhérent {{ e.id_adherent }}</option>
+        {% endfor %}
+      </select>
+      <button class="bg-green-600 text-white px-3 py-1 rounded">Retour</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

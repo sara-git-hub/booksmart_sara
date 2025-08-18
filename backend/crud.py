@@ -87,3 +87,20 @@ def create_reservation(db: Session, livre_id: int, adherent_id: int):
     db.commit()
     db.refresh(reservation)
     return reservation
+
+def create_admin(db: Session, nom: str, email: str, password: str):
+    hashed_password = pwd_context.hash(password)
+    admin = models.Adherent(
+        nom=nom,
+        email=email,
+        password=hashed_password,
+        role="admin"
+    )
+    db.add(admin)
+    db.commit()
+    db.refresh(admin)
+    return admin
+
+def admin_required(request: Request):
+    if request.session.get("user_role") != "admin":
+        raise HTTPException(status_code=403, detail="Accès réservé aux administrateurs")

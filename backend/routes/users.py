@@ -91,8 +91,11 @@ async def login_submit(
         request.session["user_nom"] = user.nom
         request.session["user_role"] = user.role
         
-        # Redirection vers page d'accueil ou dashboard
-        return RedirectResponse(url="/api/home", status_code=303)
+        # Redirection selon le rôle
+        if user.role == "admin":
+            return RedirectResponse(url="/admin/gestion-adherents", status_code=302)
+        else:
+            return RedirectResponse(url="/api/home", status_code=302)
         
     except Exception as e:
         return templates.TemplateResponse("login.html", {
@@ -138,5 +141,14 @@ async def mes_emprunts(request: Request, db: Session = Depends(database.get_db))
             "en_retard": datetime.utcnow() > e.date_retour_prevue
         } for e in emprunts
     ]}
+
+@router.get("/profil")
+async def profil(request: Request, db: Session = Depends(database.get_db)):
+    user = crud.get_current_user(request, db)
+    if not user:
+        return RedirectResponse(url="/api/login", status_code=303)
+
+    emprunts = db.query(models.Emprunt).filter_by(id_adherent=user.id).all()
+    return templates.TemplateResponse("profil.html", {"request": request, "user": user, "emprunts": emprunts})
 
 

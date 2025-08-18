@@ -1,1 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Mon profil{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto bg-white p-6 rounded shadow">
+  <h1 class="text-xl font-bold mb-4">Bonjour, {{ user.nom }}</h1>
+
+  <h2 class="text-lg font-semibold mb-2">Mes emprunts</h2>
+  <div class="space-y-2">
+    {% for e in emprunts %}
+      {% set en_retard = (e.date_retour_effectif is none) and (e.date_retour_prevue and e.date_retour_prevue < (now or none)) %}
+      <div class="border p-3 rounded {% if en_retard %}border-red-500{% endif %}">
+        <div>Livre #{{ e.id_livre }} — Emprunté le {{ e.date_emprunt }}</div>
+        <div>Retour prévu : {{ e.date_retour_prevue }}</div>
+        {% if e.date_retour_effectif %}
+          <div>Retourné le {{ e.date_retour_effectif }}</div>
+        {% else %}
+          <div class="{% if en_retard %}text-red-600 font-semibold{% endif %}">
+            {% if en_retard %}En retard{% else %}En cours{% endif %}
+          </div>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
 

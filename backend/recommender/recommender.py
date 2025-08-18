@@ -19,5 +19,7 @@ def modele_recommandation(df):
     # Sauvegarder le modèle vectorizer et la matrice de similarité
     joblib.dump(vectorizer, r'C:\Users\lenovo\Documents\BookSmart_Sara\backend\recommender\tfidf_vectorizer.joblib')
     joblib.dump(cosine_sim, r'C:\Users\lenovo\Documents\BookSmart_Sara\backend\recommender\cosine_similarity_matrix.joblib')
+    joblib.dump(tfidf_matrix, r'C:\Users\lenovo\Documents\BookSmart_Sara\backend\recommender\tfidf_matrix.joblib')
+
 
     print("Modèle et matrice sauvegardés avec succès.")
