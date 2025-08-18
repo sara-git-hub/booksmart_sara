@@ -23,7 +23,7 @@ class AdherentOut(AdherentBase):
     date_inscription: Optional[date]
 
     class Config:
-        orm_mode = True  # Permet de lire les données depuis la base de données
+        from_attributes=True
 
 
 # Livre
@@ -39,7 +39,7 @@ class LivreOut(LivreBase):
     id: int
 
     class Config:
-        orm_mode = True
+        from_attributes=True
 
 
 # Réservation
@@ -53,7 +53,7 @@ class ReservationOut(ReservationBase):
     statut: Optional[str]
 
     class Config:
-        orm_mode = True
+        from_attributes=True
 
 
 # Emprunt
@@ -68,4 +68,4 @@ class EmpruntOut(EmpruntBase):
     date_retour_effectif: Optional[date]
 
     class Config:
-        orm_mode = True
+        from_attributes=True

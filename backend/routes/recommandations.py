@@ -6,6 +6,7 @@ from backend.config import templates
 import joblib
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
+from backend.recommender.recommender import preprocess_text_func
 
 
 router = APIRouter(prefix="/api", tags=["recommandations"])
@@ -33,6 +34,7 @@ async def recommander_par_description(
     db: Session = Depends(database.get_db)
 ):
     # Transformer la description saisie
+    description=preprocess_text_func(description)
     desc_vec = vectorizer.transform([description])
 
     # Calculer la similarité avec tous les livres

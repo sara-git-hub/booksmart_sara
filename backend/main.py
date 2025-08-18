@@ -5,16 +5,22 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select
 from starlette.middleware.sessions import SessionMiddleware
 from fastapi.staticfiles import StaticFiles
+import nltk
+from nltk.stem import PorterStemmer
 
 
 from backend.utils import clean_all
 from backend.scraping.scrap_books_toscrape import BooksToScraper
-from backend.recommender.recommender import modele_recommandation
+from backend.recommender.recommender import modele_recommandation, preprocess_text_func
 from backend.database import engine, Base
 from backend import models
 from backend.routes import admin, livres, recommandations, reservations, stats, users
 from backend.config import SECRET_KEY, templates
 
+# Téléchargement des ressources NLTK et initialisation des outils de traitement
+nltk.download('stopwords', quiet=True)
+nltk.download('punkt_tab', quiet=True)
+stemmer = PorterStemmer()
 
 # Création de l'application FastAPI
 app = FastAPI()
