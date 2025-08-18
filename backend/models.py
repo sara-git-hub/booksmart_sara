@@ -42,7 +42,7 @@ class Emprunt(Base):
     id = Column(Integer, primary_key=True, index=True)
     id_adherent = Column(Integer, ForeignKey("adherents.id", ondelete="CASCADE"))
     id_livre = Column(Integer, ForeignKey("livres.id", ondelete="CASCADE"))
-    date_emprunt = Column(Date, default=datetime.utcnow)
+    date_emprunt = Column(Date, default=datetime.now)
     date_retour_prevue = Column(Date, nullable=False)
     date_retour_effectif = Column(Date, nullable=True)
 

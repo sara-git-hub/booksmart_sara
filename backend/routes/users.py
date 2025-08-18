@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Response,Request,
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime, date
 from backend import schemas, crud, database,models
 from backend.config import templates
 
@@ -126,29 +126,22 @@ def home(request: Request, db: Session = Depends(database.get_db)):
         {"request": request, "livres": livres, "user": user}
     )
 
-@router.get("/mes-emprunts")
-async def mes_emprunts(request: Request, db: Session = Depends(database.get_db)):
-    user_id = request.session.get("user_id")
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Utilisateur non connecté")
-
-    emprunts = db.query(models.Emprunt).filter_by(id_adherent=user_id).all()
-    return {"emprunts": [
-        {
-            "titre": e.livre.titre,
-            "date_emprunt": e.date_emprunt.strftime("%d/%m/%Y"),
-            "date_retour_prevue": e.date_retour_prevue.strftime("%d/%m/%Y"),
-            "en_retard": datetime.utcnow() > e.date_retour_prevue
-        } for e in emprunts
-    ]}
-
 @router.get("/profil")
 async def profil(request: Request, db: Session = Depends(database.get_db)):
     user = crud.get_current_user(request, db)
     if not user:
         return RedirectResponse(url="/api/login", status_code=303)
 
+    # Récupérer les emprunts liés à l'utilisateur
     emprunts = db.query(models.Emprunt).filter_by(id_adherent=user.id).all()
-    return templates.TemplateResponse("profil.html", {"request": request, "user": user, "emprunts": emprunts})
+    
+    # Passer la date courante pour le calcul des retards
+    now = date.today()
+
+    return templates.TemplateResponse(
+        "profil.html",
+        {"request": request, "user": user, "emprunts": emprunts, "now": now}
+    )
+
 
 

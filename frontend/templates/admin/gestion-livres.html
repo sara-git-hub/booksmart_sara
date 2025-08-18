@@ -6,9 +6,15 @@
 <h1 class="text-3xl font-bold mb-6">Gestion des livres</h1>
 
 <!-- Formulaire de recherche -->
-<form method="get" action="/admin/gestion-livres" class="mb-4">
+<form method="get" action="/admin/gestion-livres" class="mb-4 flex gap-2 items-center">
+    <!-- Recherche par titre ou description -->
     <input type="text" name="search" placeholder="Rechercher un livre..."
-           value="{{ search }}" class="border px-2 py-1 rounded">
+           value="{{ search }}" class="border px-2 py-1 rounded flex-1">
+
+    <!-- Recherche par ID -->
+    <input type="number" name="id_livre" placeholder="ID" value="{{ id_livre }}"
+           class="border px-2 py-1 rounded w-24">
+
     <button type="submit" class="bg-blue-500 text-white px-3 py-1 rounded">Rechercher</button>
 </form>
 

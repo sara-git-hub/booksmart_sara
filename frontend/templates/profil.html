@@ -1,26 +1,51 @@
 {% extends "base.html" %}
 {% block title %}Mon profil{% endblock %}
+
 {% block content %}
 <div class="max-w-3xl mx-auto bg-white p-6 rounded shadow">
   <h1 class="text-xl font-bold mb-4">Bonjour, {{ user.nom }}</h1>
 
-  <h2 class="text-lg font-semibold mb-2">Mes emprunts</h2>
-  <div class="space-y-2">
-    {% for e in emprunts %}
-      {% set en_retard = (e.date_retour_effectif is none) and (e.date_retour_prevue and e.date_retour_prevue < (now or none)) %}
-      <div class="border p-3 rounded {% if en_retard %}border-red-500{% endif %}">
-        <div>Livre #{{ e.id_livre }} — Emprunté le {{ e.date_emprunt }}</div>
-        <div>Retour prévu : {{ e.date_retour_prevue }}</div>
-        {% if e.date_retour_effectif %}
-          <div>Retourné le {{ e.date_retour_effectif }}</div>
-        {% else %}
-          <div class="{% if en_retard %}text-red-600 font-semibold{% endif %}">
-            {% if en_retard %}En retard{% else %}En cours{% endif %}
-          </div>
-        {% endif %}
-      </div>
-    {% endfor %}
+  <!-- Infos personnelles -->
+  <div class="mb-6">
+    <p><strong>Email :</strong> {{ user.email }}</p>
+    <p><strong>Rôle :</strong> {{ user.role }}</p>
+    <p><strong>Date d'inscription :</strong> {{ user.date_inscription.strftime("%d/%m/%Y") }}</p>
+  </div>
+
+  <!-- Onglet Mes emprunts -->
+  <div>
+    <button id="toggle-emprunts" class="px-4 py-2 bg-blue-500 text-white rounded">Mes emprunts</button>
+  </div>
+
+  <!-- Contenu emprunts (caché par défaut) -->
+  <div id="content-emprunts" class="mt-4 hidden">
+    <div class="space-y-2">
+      {% for e in emprunts %}
+        {% set en_retard = (e.date_retour_effectif is none) and (e.date_retour_prevue and e.date_retour_prevue < now) %}
+        <div class="border p-3 rounded {% if en_retard %}border-red-500{% endif %}">
+          <div><strong>{{ e.livre.titre }}</strong> — Emprunté le {{ e.date_emprunt.strftime("%d/%m/%Y") }}</div>
+          <div>Retour prévu : {{ e.date_retour_prevue.strftime("%d/%m/%Y") }}</div>
+          {% if e.date_retour_effectif %}
+            <div>Retourné le {{ e.date_retour_effectif.strftime("%d/%m/%Y") }}</div>
+          {% else %}
+            <div class="{% if en_retard %}text-red-600 font-semibold{% endif %}">
+              {% if en_retard %}En retard{% else %}En cours{% endif %}
+            </div>
+          {% endif %}
+        </div>
+      {% else %}
+        <p>Aucun emprunt en cours.</p>
+      {% endfor %}
+    </div>
   </div>
 </div>
-{% endblock %}
 
+<script>
+const toggleBtn = document.getElementById('toggle-emprunts');
+const contentEmprunts = document.getElementById('content-emprunts');
+
+toggleBtn.addEventListener('click', () => {
+  contentEmprunts.classList.toggle('hidden');
+});
+</script>
+{% endblock %}

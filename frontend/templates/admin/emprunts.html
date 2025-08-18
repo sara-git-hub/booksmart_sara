@@ -1,29 +1,111 @@
 {% extends "base.html" %}
-{% block content %}
-<div class="max-w-4xl mx-auto space-y-6">
-  <div class="bg-white p-4 rounded shadow">
-    <h2 class="font-semibold mb-2">Nouvel emprunt</h2>
-    <form method="post" action="/admin/emprunts" class="flex gap-2 flex-wrap">
-      <select name="id_adherent" class="border p-1 rounded">
-        {% for a in adherents %}<option value="{{ a.id }}">{{ a.nom }} ({{ a.email }})</option>{% endfor %}
-      </select>
-      <select name="id_livre" class="border p-1 rounded">
-        {% for l in livres %}<option value="{{ l.id }}">{{ l.titre }} — stock {{ l.stock }}</option>{% endfor %}
-      </select>
-      <button class="bg-blue-600 text-white px-3 py-1 rounded">Enregistrer</button>
-    </form>
-  </div>
 
-  <div class="bg-white p-4 rounded shadow">
-    <h2 class="font-semibold mb-2">Enregistrer un retour</h2>
-    <form method="post" action="/admin/retours" class="flex gap-2 flex-wrap">
-      <select name="emprunt_id" class="border p-1 rounded">
-        {% for e in emprunts if not e.date_retour_effectif %}
-          <option value="{{ e.id }}">Emprunt #{{ e.id }} — Livre {{ e.id_livre }} — Adhérent {{ e.id_adherent }}</option>
-        {% endfor %}
-      </select>
-      <button class="bg-green-600 text-white px-3 py-1 rounded">Retour</button>
+{% block title %}Gestion des emprunts{% endblock %}
+
+{% block content %}
+<h1 class="text-3xl font-bold mb-6">Gestion des emprunts et réservations</h1>
+
+<!-- Formulaire : créer un emprunt manuel -->
+<div class="mb-6 border p-4 rounded shadow">
+    <h2 class="text-xl font-bold mb-2">Créer un emprunt manuel</h2>
+    <form method="post" action="/admin/emprunts" class="flex gap-2 items-center flex-wrap">
+        <select name="id_adherent" class="border px-2 py-1 rounded">
+            <option value="">-- Sélectionner un adhérent --</option>
+            {% for a in adherents %}
+                <option value="{{ a.id }}">{{ a.nom }} ({{ a.email }})</option>
+            {% endfor %}
+        </select>
+
+        <select name="id_livre" class="border px-2 py-1 rounded">
+            <option value="">-- Sélectionner un livre --</option>
+            {% for l in livres %}
+                <option value="{{ l.id }}">{{ l.titre }} (Stock: {{ l.stock }})</option>
+            {% endfor %}
+        </select>
+
+        <button type="submit" class="bg-green-500 text-white px-3 py-1 rounded">
+            Créer l'emprunt
+        </button>
     </form>
-  </div>
 </div>
+
+<!-- Liste des emprunts -->
+<h2 class="text-2xl font-bold mb-4">Emprunts en cours</h2>
+<table class="table-auto w-full border-collapse border border-gray-300 mb-6">
+    <thead>
+        <tr class="bg-gray-200">
+            <th class="border px-2 py-1">Adhérent</th>
+            <th class="border px-2 py-1">Livre</th>
+            <th class="border px-2 py-1">Date emprunt</th>
+            <th class="border px-2 py-1">Retour prévu</th>
+            <th class="border px-2 py-1">Retour effectif</th>
+            <th class="border px-2 py-1">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for e in emprunts %}
+        <tr>
+            <td class="border px-2 py-1">{{ e.adherent.nom }}</td>
+            <td class="border px-2 py-1">{{ e.livre.titre }}</td>
+            <td class="border px-2 py-1">{{ e.date_emprunt }}</td>
+            <td class="border px-2 py-1">{{ e.date_retour_prevue }}</td>
+            <td class="border px-2 py-1">
+                {% if e.date_retour_effectif %}
+                    {{ e.date_retour_effectif }}
+                {% else %}
+                    En cours
+                {% endif %}
+            </td>
+            <td class="border px-2 py-1">
+                {% if not e.date_retour_effectif %}
+                <form method="post" action="/admin/retours" style="display:inline-block">
+                    <input type="hidden" name="emprunt_id" value="{{ e.id }}">
+                    <button type="submit" class="bg-blue-500 text-white px-2 py-1 rounded">
+                        Enregistrer retour
+                    </button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Liste des réservations -->
+<h2 class="text-2xl font-bold mb-4">Réservations en attente</h2>
+<table class="table-auto w-full border-collapse border border-gray-300">
+    <thead>
+        <tr class="bg-gray-200">
+            <th class="border px-2 py-1">Adhérent</th>
+            <th class="border px-2 py-1">Livre</th>
+            <th class="border px-2 py-1">Date réservation</th>
+            <th class="border px-2 py-1">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for r in reservations %}
+        <tr>
+            <td class="border px-2 py-1">{{ r.adherent.nom }}</td>
+            <td class="border px-2 py-1">{{ r.livre.titre }}</td>
+            <td class="border px-2 py-1">{{ r.date_reservation }}</td>
+            <td class="border px-2 py-1">
+                <!-- Confirmer -->
+                <form method="post" action="/admin/reservations/{{ r.id }}/confirmer" style="display:inline-block">
+                    <button type="submit" class="bg-green-500 text-white px-2 py-1 rounded">
+                        Confirmer
+                    </button>
+                </form>
+
+                <!-- Supprimer -->
+                <form method="post" action="/admin/reservations/{{ r.id }}/supprimer" style="display:inline-block"
+                      onsubmit="return confirm('Supprimer cette réservation ?');">
+                    <button type="submit" class="bg-red-500 text-white px-2 py-1 rounded">
+                        Supprimer
+                    </button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 {% endblock %}

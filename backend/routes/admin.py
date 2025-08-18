@@ -1,18 +1,17 @@
-from fastapi import APIRouter, Request, Depends, HTTPException, Form
+from fastapi import APIRouter, Request, Depends, HTTPException, Form, Query
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from backend import crud, database, models,schemas
 from backend.config import templates
 from pydantic import ValidationError
 from typing import Optional, List
+from datetime import date, datetime, timedelta
 
 router = APIRouter(
     prefix="/admin",
     tags=["admin"],
     dependencies=[Depends(crud.admin_required)]
 )
-
-
 
 # Liste des adhérents
 @router.get("/gestion-adherents")
@@ -70,11 +69,25 @@ async def modifier_adherent(
 
 
 @router.get("/gestion-livres")
-async def gestion_livres(request: Request, db: Session = Depends(database.get_db), search: str = ""):
-    livres = crud.get_livres(db, search)
+async def gestion_livres(
+    request: Request,
+    db: Session = Depends(database.get_db),
+    search: str = "",
+    id_livre: str = Query("")  # <- récupérer comme string
+):
+    try:
+        id_livre_int: Optional[int] = int(id_livre) if id_livre.strip() else None
+    except ValueError:
+        id_livre_int = None
+
+    if id_livre_int is not None:
+        livres = db.query(models.Livre).filter(models.Livre.id == id_livre_int).all()
+    else:
+        livres = crud.get_livres(db, search)
+
     return templates.TemplateResponse(
         "admin/gestion-livres.html",
-        {"request": request, "livres": livres, "search": search}
+        {"request": request, "livres": livres, "search": search, "id_livre": id_livre}
     )
 
 @router.post("/livres/add")
@@ -142,14 +155,26 @@ async def supprimer_livre(livre_id: int, db: Session = Depends(database.get_db))
     db.commit()
     return RedirectResponse(url="/admin/gestion-livres", status_code=303)
 
+# Page de gestion : emprunts + réservations
 @router.get("/emprunts")
 async def page_emprunts(request: Request, db: Session = Depends(database.get_db)):
     adherents = db.query(models.Adherent).all()
     livres = db.query(models.Livre).all()
     emprunts = db.query(models.Emprunt).all()
-    return templates.TemplateResponse("admin/emprunts.html",
-        {"request": request, "adherents": adherents, "livres": livres, "emprunts": emprunts})
+    reservations = db.query(models.Reservation).all()
+    print("Adherents count:", len(adherents))
+    return templates.TemplateResponse(
+        "admin/emprunts.html",
+        {
+            "request": request,
+            "adherents": adherents,
+            "livres": livres,
+            "emprunts": emprunts,
+            "reservations": reservations,
+        }
+    )
 
+# Création manuelle d’un emprunt
 @router.post("/emprunts")
 async def enregistrer_emprunt(
     id_adherent: int = Form(...),
@@ -159,15 +184,14 @@ async def enregistrer_emprunt(
     livre = db.query(models.Livre).filter_by(id=id_livre).first()
     if not livre or livre.stock <= 0:
         raise HTTPException(400, "Livre indisponible")
-    # créer emprunt + maj stock
-    from datetime import date, timedelta
-    e = models.Emprunt(
+
+    emprunt = models.Emprunt(
         id_adherent=id_adherent,
         id_livre=id_livre,
         date_emprunt=date.today(),
         date_retour_prevue=date.today() + timedelta(days=14),
     )
-    db.add(e)
+    db.add(emprunt)
     livre.stock -= 1
     db.commit()
     return RedirectResponse(url="/admin/emprunts", status_code=303)
@@ -184,5 +208,46 @@ async def enregistrer_retour(
     e.date_retour_effectif = date.today()
     livre = db.query(models.Livre).filter_by(id=e.id_livre).first()
     livre.stock += 1
+    db.commit()
+    return RedirectResponse(url="/admin/emprunts", status_code=303)
+
+# Confirmer une réservation => transformer en emprunt
+@router.post("/reservations/{reservation_id}/confirmer")
+async def confirmer_reservation(reservation_id: int, db: Session = Depends(database.get_db)):
+    reservation = db.query(models.Reservation).filter_by(id=reservation_id).first()
+    if not reservation:
+        raise HTTPException(404, "Réservation introuvable")
+
+    livre = db.query(models.Livre).filter_by(id=reservation.id_livre).first()
+    if not livre or livre.stock <= 0:
+        raise HTTPException(400, "Livre indisponible")
+
+    # créer emprunt
+    emprunt = models.Emprunt(
+        id_adherent=reservation.id_adherent,
+        id_livre=reservation.id_livre,
+        date_emprunt=date.today(),
+        date_retour_prevue=date.today() + timedelta(days=14),
+    )
+    db.add(emprunt)
+
+    # mettre à jour le stock
+    livre.stock -= 1
+
+    # supprimer la réservation
+    db.delete(reservation)
+
+    db.commit()
+    return RedirectResponse(url="/admin/emprunts", status_code=303)
+
+
+# Supprimer une réservation
+@router.post("/reservations/{reservation_id}/supprimer")
+async def supprimer_reservation(reservation_id: int, db: Session = Depends(database.get_db)):
+    reservation = db.query(models.Reservation).filter_by(id=reservation_id).first()
+    if not reservation:
+        raise HTTPException(404, "Réservation introuvable")
+
+    db.delete(reservation)
     db.commit()
     return RedirectResponse(url="/admin/emprunts", status_code=303)
