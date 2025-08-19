@@ -6,6 +6,7 @@ from backend.config import templates
 from pydantic import ValidationError
 from typing import Optional, List
 from datetime import date, datetime, timedelta
+from backend.config import templates
 
 router = APIRouter(
     prefix="/admin",
@@ -19,17 +20,32 @@ async def gestion_adherents(request: Request, db: Session = Depends(database.get
     adherents = db.query(models.Adherent).all()
     return templates.TemplateResponse("admin/gestion-adherents.html", {"request": request, "adherents": adherents})
 
-# Suspendre un adhérent
 
-# Suspendre un adhérent (POST)
+# Suspendre un adhérent
 @router.post("/delete/{adherent_id}")
-async def suspendre_adherent(adherent_id: int, db: Session = Depends(database.get_db)):
+async def suspendre_adherent(request:Request,adherent_id: int, db: Session = Depends(database.get_db)):
+    adherents = db.query(models.Adherent).all()
     adherent = db.query(models.Adherent).filter(models.Adherent.id == adherent_id).first()
     if not adherent:
-        raise HTTPException(status_code=404, detail="Adhérent non trouvé")
+        return templates.TemplateResponse(
+            "admin/gestion-adherents.html",
+            {
+                "request": request,
+                "adherents": adherents,
+                "error": "Adhérent non trouvé"
+            }
+        )
     db.delete(adherent)
     db.commit()
-    return RedirectResponse(url="/admin/gestion-adherents", status_code=303)
+    adherents = db.query(models.Adherent).all()
+    return templates.TemplateResponse(
+        "admin/gestion-adherents.html",
+        {
+            "request": request,
+            "adherents": adherents,
+            "success": "Adhérent suspendu avec succès !"
+        }
+    )
 
 # Modifier un adhérent (exemple : changer le nom ou l'email)
 @router.post("/modify/{adherent_id}")
@@ -40,31 +56,44 @@ async def modifier_adherent(
     email: str = Form(...),
     db: Session = Depends(database.get_db)
 ):
+    adherents = db.query(models.Adherent).all()
     adherent = db.query(models.Adherent).filter(models.Adherent.id == adherent_id).first()
     if not adherent:
-        raise HTTPException(status_code=404, detail="Adhérent non trouvé")
+        return templates.TemplateResponse(
+            "admin/gestion-adherents.html",
+            {
+                "request": request,
+                "adherents": adherents,
+                "error": "Adhérent non trouvé"
+            }
+        )
     
-    errors = None
     try:
         # Validation Pydantic
         adherent_data = schemas.AdherentBase(nom=nom, email=email)
         adherent.nom = adherent_data.nom
         adherent.email = adherent_data.email
         db.commit()
-        return RedirectResponse(url="/admin/gestion-adherents", status_code=303)
+        # Recharger la liste après modification
+        adherents = db.query(models.Adherent).all()
+        return templates.TemplateResponse(
+            "admin/gestion-adherents.html",
+            {
+                "request": request,
+                "adherents": adherents,
+                "success": "Adhérent modifié avec succès !"
+            }
+        )
     except ValidationError as e:
         errors = e.errors()
-    
-    # En cas d'erreur de validation, on renvoie le template avec les erreurs
-    adherents = db.query(models.Adherent).all()
-    return templates.TemplateResponse(
-        "admin/gestion-adherents.html",
-        {
-            "request": request,   # Important : passer l'objet Request
-            "adherents": adherents,
-            "errors": errors      # Tu peux afficher ces erreurs dans le template
-        }
-    )
+        return templates.TemplateResponse(
+            "admin/gestion-adherents.html",
+            {
+                "request": request,
+                "adherents": adherents,
+                "errors": errors
+            }
+        )
 
 
 
@@ -85,15 +114,26 @@ async def gestion_livres(
     else:
         livres = crud.get_livres(db, search)
 
+    error = None
+    if not livres:
+        error = "Aucun livre trouvé pour votre recherche."
+
     return templates.TemplateResponse(
         "admin/gestion-livres.html",
-        {"request": request, "livres": livres, "search": search, "id_livre": id_livre}
+        {
+            "request": request,
+            "livres": livres,
+            "search": search,
+            "id_livre": id_livre,
+            "error": error
+        }
     )
+
 
 @router.post("/livres/add")
 async def ajouter_livre(
+    request: Request,
     titre: str = Form(...),
-    auteur: str = Form(...),
     prix: float = Form(...),
     description: str = Form(""),
     image_url: str = Form(""),
@@ -110,16 +150,36 @@ async def ajouter_livre(
             stock=stock
         )
     except ValidationError as e:
-        return {"errors": e.errors()}
+        livres = crud.get_livres(db, "")
+        return templates.TemplateResponse(
+            "admin/gestion-livres.html",
+            {
+                "request": request,
+                "livres": livres,
+                "error": "Erreur de validation des données.",
+                "errors": e.errors(),
+                "success": None
+            }
+        )
 
     # Création du livre après validation
     livre = models.Livre(**livre_data.model_dump())
     db.add(livre)
     db.commit()
-    return RedirectResponse(url="/admin/gestion-livres", status_code=303)
+    livres = crud.get_livres(db, "")
+    return templates.TemplateResponse(
+        "admin/gestion-livres.html",
+        {
+            "request": request,
+            "livres": livres,
+            "success": "Livre ajouté avec succès !",
+            "error": None
+        }
+    )
 
 @router.post("/livres/modify/{livre_id}")
 async def modifier_livre(
+    request: Request,  # il faut l'ajouter pour passer au template
     livre_id: int,
     titre: Optional[str] = Form(None),
     prix: Optional[float] = Form(None),
@@ -129,8 +189,12 @@ async def modifier_livre(
     db: Session = Depends(database.get_db)
 ):
     livre = crud.get_livre(db, livre_id)
+    livres = crud.get_livres(db)  # pour afficher la liste dans le template
     if not livre:
-        raise HTTPException(404, "Livre non trouvé")
+        return templates.TemplateResponse(
+            "admin/gestion-livres.html",
+            {"request": request, "livres": livres, "error": "Livre non trouvé"}
+        )
 
     if titre is not None:
         livre.titre = titre
@@ -144,16 +208,31 @@ async def modifier_livre(
         livre.stock = stock
 
     db.commit()
-    return RedirectResponse(url="/admin/gestion-livres", status_code=303)
+
+    # Renvoie le template avec un message de succès
+    return templates.TemplateResponse(
+        "admin/gestion-livres.html",
+        {"request": request, "livres": livres, "success": "Livre modifié avec succès !"}
+    )
 
 @router.get("/livres/delete/{livre_id}")
-async def supprimer_livre(livre_id: int, db: Session = Depends(database.get_db)):
+async def supprimer_livre(request: Request, livre_id: int, db: Session = Depends(database.get_db)):
+    livres = crud.get_livres(db)  # récupère la liste pour l'affichage
     livre = crud.get_livre(db, livre_id)
+    
     if not livre:
-        raise HTTPException(404, "Livre non trouvé")
+        return templates.TemplateResponse(
+            "admin/gestion-livres.html",
+            {"request": request, "livres": livres, "error": "Livre non trouvé"}
+        )
+
     db.delete(livre)
     db.commit()
-    return RedirectResponse(url="/admin/gestion-livres", status_code=303)
+
+    return templates.TemplateResponse(
+        "admin/gestion-livres.html",
+        {"request": request, "livres": crud.get_livres(db), "success": "Livre supprimé avec succès !"}
+    )
 
 # Page de gestion : emprunts + réservations
 @router.get("/emprunts")
@@ -162,7 +241,6 @@ async def page_emprunts(request: Request, db: Session = Depends(database.get_db)
     livres = db.query(models.Livre).all()
     emprunts = db.query(models.Emprunt).all()
     reservations = db.query(models.Reservation).all()
-    print("Adherents count:", len(adherents))
     return templates.TemplateResponse(
         "admin/emprunts.html",
         {
@@ -174,16 +252,55 @@ async def page_emprunts(request: Request, db: Session = Depends(database.get_db)
         }
     )
 
-# Création manuelle d’un emprunt
 @router.post("/emprunts")
 async def enregistrer_emprunt(
+    request: Request,
     id_adherent: int = Form(...),
     id_livre: int = Form(...),
     db: Session = Depends(database.get_db)
 ):
+    adherents = db.query(models.Adherent).all()
+    livres = db.query(models.Livre).all()
+    emprunts = db.query(models.Emprunt).all()
+    reservations = db.query(models.Reservation).all()
+
     livre = db.query(models.Livre).filter_by(id=id_livre).first()
     if not livre or livre.stock <= 0:
-        raise HTTPException(400, "Livre indisponible")
+        return templates.TemplateResponse(
+            "admin/emprunts.html",
+            {
+                "request": request,
+                "adherents": adherents,
+                "livres": livres,
+                "emprunts": emprunts,
+                "reservations": reservations,
+                "error": "Livre indisponible"
+            }
+        )
+    
+    
+    # Vérifier si l’adhérent a déjà emprunté ce livre et ne l’a pas encore rendu
+    emprunt_existant = (
+        db.query(models.Emprunt)
+        .filter(
+            models.Emprunt.id_adherent == id_adherent,
+            models.Emprunt.id_livre == id_livre,
+            models.Emprunt.date_retour_effectif.is_(None)  # pas encore rendu
+        )
+        .first()
+    )
+    if emprunt_existant:
+        return templates.TemplateResponse(
+            "admin/emprunts.html",
+            {
+                "request": request,
+                "adherents": adherents,
+                "livres": livres,
+                "emprunts": emprunts,
+                "reservations": reservations,
+                "error": "Cet adhérent a déjà emprunté ce livre et ne l’a pas encore rendu"
+            }
+        )
 
     emprunt = models.Emprunt(
         id_adherent=id_adherent,
@@ -194,33 +311,106 @@ async def enregistrer_emprunt(
     db.add(emprunt)
     livre.stock -= 1
     db.commit()
-    return RedirectResponse(url="/admin/emprunts", status_code=303)
+
+    # Recharger les listes après ajout
+    emprunts = db.query(models.Emprunt).all()
+    livres = db.query(models.Livre).all()
+
+    return templates.TemplateResponse(
+        "admin/emprunts.html",
+        {
+            "request": request,
+            "adherents": adherents,
+            "livres": livres,
+            "emprunts": emprunts,
+            "reservations": reservations,
+            "success": "Emprunt enregistré avec succès !"
+        }
+    )
+
 
 @router.post("/retours")
 async def enregistrer_retour(
+    request: Request,
     emprunt_id: int = Form(...),
     db: Session = Depends(database.get_db)
 ):
+    adherents = db.query(models.Adherent).all()
+    livres = db.query(models.Livre).all()
+    emprunts = db.query(models.Emprunt).all()
+    reservations = db.query(models.Reservation).all()
+
     from datetime import date
     e = db.query(models.Emprunt).filter_by(id=emprunt_id).first()
     if not e or e.date_retour_effectif:
-        raise HTTPException(400, "Emprunt introuvable ou déjà retourné")
+        return templates.TemplateResponse(
+            "admin/emprunts.html",
+            {
+                "request": request,
+                "adherents": adherents,
+                "livres": livres,
+                "emprunts": emprunts,
+                "reservations": reservations,
+                "error": "Emprunt introuvable ou déjà retourné"
+            }
+        )
+
     e.date_retour_effectif = date.today()
     livre = db.query(models.Livre).filter_by(id=e.id_livre).first()
     livre.stock += 1
     db.commit()
-    return RedirectResponse(url="/admin/emprunts", status_code=303)
 
-# Confirmer une réservation => transformer en emprunt
+    # Recharger les listes après action
+    emprunts = db.query(models.Emprunt).all()
+    livres = db.query(models.Livre).all()
+
+    return templates.TemplateResponse(
+        "admin/emprunts.html",
+        {
+            "request": request,
+            "adherents": adherents,
+            "livres": livres,
+            "emprunts": emprunts,
+            "reservations": reservations,
+            "success": "Retour enregistré avec succès !"
+        }
+    )
+
+
 @router.post("/reservations/{reservation_id}/confirmer")
-async def confirmer_reservation(reservation_id: int, db: Session = Depends(database.get_db)):
+async def confirmer_reservation(request: Request, reservation_id: int, db: Session = Depends(database.get_db)):
+    adherents = db.query(models.Adherent).all()
+    livres = db.query(models.Livre).all()
+    emprunts = db.query(models.Emprunt).all()
+    reservations = db.query(models.Reservation).all()
+
     reservation = db.query(models.Reservation).filter_by(id=reservation_id).first()
     if not reservation:
-        raise HTTPException(404, "Réservation introuvable")
+        return templates.TemplateResponse(
+            "admin/emprunts.html",
+            {
+                "request": request,
+                "adherents": adherents,
+                "livres": livres,
+                "emprunts": emprunts,
+                "reservations": reservations,
+                "error": "Réservation introuvable"
+            }
+        )
 
     livre = db.query(models.Livre).filter_by(id=reservation.id_livre).first()
     if not livre or livre.stock <= 0:
-        raise HTTPException(400, "Livre indisponible")
+        return templates.TemplateResponse(
+            "admin/emprunts.html",
+            {
+                "request": request,
+                "adherents": adherents,
+                "livres": livres,
+                "emprunts": emprunts,
+                "reservations": reservations,
+                "error": "Livre indisponible"
+            }
+        )
 
     # créer emprunt
     emprunt = models.Emprunt(
@@ -238,16 +428,60 @@ async def confirmer_reservation(reservation_id: int, db: Session = Depends(datab
     db.delete(reservation)
 
     db.commit()
-    return RedirectResponse(url="/admin/emprunts", status_code=303)
 
+    # recharger les listes après action
+    emprunts = db.query(models.Emprunt).all()
+    livres = db.query(models.Livre).all()
+    reservations = db.query(models.Reservation).all()
 
-# Supprimer une réservation
+    return templates.TemplateResponse(
+        "admin/emprunts.html",
+        {
+            "request": request,
+            "adherents": adherents,
+            "livres": livres,
+            "emprunts": emprunts,
+            "reservations": reservations,
+            "success": "Réservation confirmée et transformée en emprunt !"
+        }
+    )
+
 @router.post("/reservations/{reservation_id}/supprimer")
-async def supprimer_reservation(reservation_id: int, db: Session = Depends(database.get_db)):
+async def supprimer_reservation(request: Request, reservation_id: int, db: Session = Depends(database.get_db)):
+    adherents = db.query(models.Adherent).all()
+    livres = db.query(models.Livre).all()
+    emprunts = db.query(models.Emprunt).all()
+    reservations = db.query(models.Reservation).all()
+
     reservation = db.query(models.Reservation).filter_by(id=reservation_id).first()
     if not reservation:
-        raise HTTPException(404, "Réservation introuvable")
+        return templates.TemplateResponse(
+            "admin/emprunts.html",
+            {
+                "request": request,
+                "adherents": adherents,
+                "livres": livres,
+                "emprunts": emprunts,
+                "reservations": reservations,
+                "error": "Réservation introuvable"
+            }
+        )
 
     db.delete(reservation)
     db.commit()
-    return RedirectResponse(url="/admin/emprunts", status_code=303)
+
+    # recharger les listes après suppression
+    emprunts = db.query(models.Emprunt).all()
+    reservations = db.query(models.Reservation).all()
+
+    return templates.TemplateResponse(
+        "admin/emprunts.html",
+        {
+            "request": request,
+            "adherents": adherents,
+            "livres": livres,
+            "emprunts": emprunts,
+            "reservations": reservations,
+            "success": "Réservation supprimée avec succès !"
+        }
+    )

@@ -3,6 +3,19 @@
 {% block title %}Gestion des emprunts{% endblock %}
 
 {% block content %}
+
+{% if error %}
+  <div class="bg-red-100 text-red-700 px-4 py-2 rounded mb-4">
+    {{ error }}
+  </div>
+{% endif %}
+
+{% if success %}
+  <div class="bg-green-100 text-green-700 px-4 py-2 rounded mb-4">
+    {{ success }}
+  </div>
+{% endif %}
+
 <h1 class="text-3xl font-bold mb-6">Gestion des emprunts et réservations</h1>
 
 <!-- Formulaire : créer un emprunt manuel -->

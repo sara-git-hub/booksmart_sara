@@ -10,19 +10,36 @@
   <nav class="bg-white shadow px-4 py-3 flex items-center justify-between">
     <a href="/api/livres" class="font-bold">BookSmart</a>
 
+    <!-- Barre de recherche -->
     <form action="/api/livres" method="get" class="flex gap-2">
       <input name="search" class="border rounded px-2 py-1" placeholder="Titre..."
              value="{{ (request and request.query_params.get('search')) or '' }}">
       <button class="bg-blue-600 text-white rounded px-3 py-1">Rechercher</button>
     </form>
 
-    <div class="flex gap-3">
+    <!-- Menu utilisateur -->
+    <div class="flex gap-3 items-center">
       <a href="/api/recommander-par-description" class="text-blue-600">Suggestions</a>
 
       {% if request.session.get("user_id") %}
-        <span class="text-gray-700">Bonjour, {{ request.session.get("user_role") }}</span>
-        <a href="/api/logout" class="text-blue-600">Déconnexion</a>
+        
+        <!-- Si adhérent -->
+        {% if request.session.get("user_role") == "adherent" %}
+          <a href="/api/profil" class="text-blue-600">{{ request.session.get("user_nom") }}</a>
+          <a href="/api/logout" class="text-red-600">Déconnexion</a>
+        
+        <!-- Si admin -->
+        {% elif request.session.get("user_role") == "admin" %}
+          <span class="text-gray-700 font-semibold">Admin</span>
+          <a href="/admin/gestion-adherents" class="text-blue-600">Adhérents</a>
+          <a href="/admin/gestion-livres" class="text-blue-600">Livres</a>
+          <a href="/admin/emprunts" class="text-blue-600">Emprunts</a>
+          <a href="/admin/statistiques" class="text-blue-600">Statistiques</a>
+          <a href="/api/logout" class="text-red-600">Déconnexion</a>
+        {% endif %}
+
       {% else %}
+        <!-- Si pas connecté -->
         <a href="/api/login" class="text-blue-600">Connexion</a>
         <a href="/api/register" class="text-blue-600">Inscription</a>
       {% endif %}

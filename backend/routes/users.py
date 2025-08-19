@@ -46,7 +46,7 @@ async def register_submit(
         # Créer utilisateur
         crud.create_adherent(db, adherent_data)
         
-        return templates.TemplateResponse("inscription.html", {
+        return templates.TemplateResponse("login.html", {
             "request": request,
             "success": "Compte créé avec succès !"
         })
