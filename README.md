@@ -10,6 +10,9 @@ BookSmart est une application web développée avec FastAPI, permettant de gére
 ### Nettoyage des données (clean_all).
  - Sauvegarde dans la base de données via SQLAlchemy.
 
+### Gestion des adherents (Admin)
+ - Ajout, modification, suppression des adherents.
+
 ### Gestion des livres (Admin)
  - Ajout, modification, suppression des livres.
  - Recalcul automatique du modèle de recommandation après chaque changement, pour garder les suggestions à jour.
@@ -26,7 +29,7 @@ BookSmart est une application web développée avec FastAPI, permettant de gére
  - Garde-fou admin_required pour les routes administratives.
  - Gestion de session et rôle utilisateur adherent/admin.
 
-### 📊 Statistiques Avancées
+### 📊 Statistiques Avancées (Admin)
  - Tableau de bord
  - Visualisation des tendances
 
@@ -68,8 +71,10 @@ booksmart/
 │   ├── scraping/
 │   │   └── scrap_books_toscrape.py  # Script Selenium
 │   ├── recommender/
-│   │   ├── recommender.py        # Modèle TF-IDF + similarité cosinus
-│   │   └── model.pkl             # Modèle sauvegardé
+│   │   ├── recommender.py                  # Modèle TF-IDF + similarité cosinus
+│   │   ├── tfidf_matrix.joblib             # Matrice TF-IDF des descriptions
+│   │   ├── tfidf_vectorizer.joblib         # Vectorizer TF-IDF entrainé
+│   │   └── cosine_similarity_matrix.joblib # Matrice de similarité cosinus         
 │   ├── routes/
 │   │   ├── users.py              # Inscription / connexion
 │   │   ├── livres.py             # Recherche / consultation / stock

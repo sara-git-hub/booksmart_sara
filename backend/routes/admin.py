@@ -97,7 +97,66 @@ async def modifier_adherent(
             }
         )
 
+# Ajouter un adhérent
+@router.post("/adherents/add")
+async def ajouter_adherent(
+    request: Request,
+    nom: str = Form(...),
+    email: str = Form(...),
+    password: str = Form(...),
+    db: Session = Depends(database.get_db)
+):
+    adherents = db.query(models.Adherent).all()
 
+    # 1) Vérifier unicité de l'email
+    existing = crud.get_adherent_by_email(db, email)
+    if existing:
+        return templates.TemplateResponse(
+            "admin/gestion-adherents.html",
+            {
+                "request": request,
+                "adherents": adherents,
+                "error": "Un adhérent avec cet email existe déjà."
+            }
+        )
+
+    try:
+        #  Validation Pydantic pour nom/email
+        data = schemas.AdherentBase(nom=nom, email=email)
+
+        #  Hash du mot de passe
+        hashed_password = crud.hash_password(password)
+
+        #  Création et insertion
+        nouvel_adherent = models.Adherent(
+            nom=data.nom,
+            email=data.email,
+            password=hashed_password,
+        )
+        db.add(nouvel_adherent)
+        db.commit()
+        db.refresh(nouvel_adherent)
+
+        # Recharger la liste
+        adherents = db.query(models.Adherent).all()
+        return templates.TemplateResponse(
+            "admin/gestion-adherents.html",
+            {
+                "request": request,
+                "adherents": adherents,
+                "success": "Adhérent ajouté avec succès !"
+            }
+        )
+
+    except ValidationError as e:
+        return templates.TemplateResponse(
+            "admin/gestion-adherents.html",
+            {
+                "request": request,
+                "adherents": adherents,
+                "errors": e.errors()
+            }
+        )
 
 @router.get("/gestion-livres")
 async def gestion_livres(
