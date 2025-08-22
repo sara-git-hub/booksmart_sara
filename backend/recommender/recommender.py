@@ -10,7 +10,6 @@ from nltk.stem import PorterStemmer
 import string
 
 # Téléchargement des ressources NLTK et initialisation des outils de traitement
-nltk.download('stopwords', quiet=True)
 nltk.download('punkt_tab', quiet=True)
 stemmer = PorterStemmer()
 
@@ -34,6 +33,7 @@ def preprocess_text_func(text):
     
         return processed_text_str
 
+# Fonction qui genère les modèles de recommendations
 def modele_recommandation(df):
 
     # Extraire la colonne 'description' pour le traitement

@@ -17,7 +17,7 @@ cosine_sim = joblib.load(r"C:\Users\lenovo\Documents\BookSmart_Sara\backend\reco
 tfidf_matrix = joblib.load(r"C:\Users\lenovo\Documents\BookSmart_Sara\backend\recommender\tfidf_matrix.joblib")
 
 
-# Page GET : formulaire de saisie
+# Afficher le formulaire pour recommendation
 @router.get("/recommander-par-description")
 async def get_livres_route(request: Request):
     return templates.TemplateResponse(
@@ -26,7 +26,7 @@ async def get_livres_route(request: Request):
     )
 
 
-
+# Route pour récuperer la description et proposer les recommandations
 @router.post("/recommander-par-description", response_class=HTMLResponse)
 async def recommander_par_description(
     request: Request,

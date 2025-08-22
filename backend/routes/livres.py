@@ -6,16 +6,18 @@ from backend import models, schemas
 
 router = APIRouter(prefix="/api", tags=["livres"])
 
+# Route pour récuperer tous les livres
 @router.get("/livres")
 async def get_livres_route(request: Request, search: str = "", db: Session = Depends(database.get_db)):
     livres = crud.get_livres(db, search)
-    user = crud.get_current_user(request, db)  # <- utilisation de la fonction
+    user = crud.get_current_user(request, db)
 
     return templates.TemplateResponse(
         "home.html",
         {"request": request, "livres": livres, "search": search, "user": user}
     )
 
+# Route pour recuperer un livre avec son id
 @router.get("/livre/{livre_id}")
 async def livre_detail(request: Request, livre_id: int, db: Session = Depends(database.get_db)):
     livre = crud.get_livre(db, livre_id)

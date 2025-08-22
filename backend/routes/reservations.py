@@ -8,6 +8,7 @@ router = APIRouter(
     prefix="/api",
     tags=["reservations"])
 
+# Route pour créer une reservation adherent
 @router.post("/reservations")
 async def create_reservation(
     request: Request,

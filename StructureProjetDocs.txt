@@ -36,26 +36,11 @@ booksmart/
 │   │   │   ├── gestion-livres.html
 │   │   │   ├── emprunts.html
 │   │   │   ├── statistiques.html
-│   │   │   └── reservations.html
-│   ├── static/
-│   │   ├── css/
-│   │   │   ├── style.css
-│   │   │   └── tailwind.css
-│   │   ├── js/
-│   │   │   ├── main.js
-│   │   │   └── chart.js
-│   │   └── images/
 │
 ├── data/
 │   ├── livres_bruts.csv          # Données scrapées
 │   ├── livres_nettoyes.csv       # Données nettoyées
 │   └── sauvegardes/              # Backups DB
-│
-├── tests/
-│   ├── test_auth.py
-│   ├── test_livres.py
-│   ├── test_recommandations.py
-│   └── test_scraping.py
 │
 ├── .env                          # Variables d'environnement (DB, secrets)
 ├── requirements.txt              # Dépendances Python

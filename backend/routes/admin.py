@@ -1,12 +1,14 @@
-from fastapi import APIRouter, Request, Depends, HTTPException, Form, Query
-from fastapi.responses import RedirectResponse
+import pandas as pd
+from fastapi import APIRouter, Request, Depends, Form, Query
 from sqlalchemy.orm import Session
 from backend import crud, database, models,schemas
 from backend.config import templates
 from pydantic import ValidationError
-from typing import Optional, List
-from datetime import date, datetime, timedelta
-from backend.config import templates
+from typing import Optional
+from datetime import date, timedelta
+from backend.recommender.recommender import modele_recommandation
+
+
 
 router = APIRouter(
     prefix="/admin",
@@ -166,6 +168,11 @@ async def ajouter_livre(
     livre = models.Livre(**livre_data.model_dump())
     db.add(livre)
     db.commit()
+
+    # Recalculer le modèle après modification
+    livres_df = pd.read_sql_table('livres', con=database.engine)
+    modele_recommandation(livres_df)
+
     livres = crud.get_livres(db, "")
     return templates.TemplateResponse(
         "admin/gestion-livres.html",
@@ -179,7 +186,7 @@ async def ajouter_livre(
 
 @router.post("/livres/modify/{livre_id}")
 async def modifier_livre(
-    request: Request,  # il faut l'ajouter pour passer au template
+    request: Request,
     livre_id: int,
     titre: Optional[str] = Form(None),
     prix: Optional[float] = Form(None),
@@ -189,7 +196,7 @@ async def modifier_livre(
     db: Session = Depends(database.get_db)
 ):
     livre = crud.get_livre(db, livre_id)
-    livres = crud.get_livres(db)  # pour afficher la liste dans le template
+    livres = crud.get_livres(db)
     if not livre:
         return templates.TemplateResponse(
             "admin/gestion-livres.html",
@@ -208,6 +215,10 @@ async def modifier_livre(
         livre.stock = stock
 
     db.commit()
+
+    # Recalculer le modèle après modification
+    livres_df = pd.read_sql_table('livres', con=database.engine)
+    modele_recommandation(livres_df)
 
     # Renvoie le template avec un message de succès
     return templates.TemplateResponse(
@@ -228,6 +239,10 @@ async def supprimer_livre(request: Request, livre_id: int, db: Session = Depends
 
     db.delete(livre)
     db.commit()
+
+    # Recalculer le modèle après modification
+    livres_df = pd.read_sql_table('livres', con=database.engine)
+    modele_recommandation(livres_df)
 
     return templates.TemplateResponse(
         "admin/gestion-livres.html",
@@ -252,6 +267,7 @@ async def page_emprunts(request: Request, db: Session = Depends(database.get_db)
         }
     )
 
+# Route pour enregistrer un emprunt
 @router.post("/emprunts")
 async def enregistrer_emprunt(
     request: Request,
@@ -328,7 +344,7 @@ async def enregistrer_emprunt(
         }
     )
 
-
+# Route pour enregistrer un retour
 @router.post("/retours")
 async def enregistrer_retour(
     request: Request,
@@ -376,7 +392,7 @@ async def enregistrer_retour(
         }
     )
 
-
+# Route pour confirmer une réservation
 @router.post("/reservations/{reservation_id}/confirmer")
 async def confirmer_reservation(request: Request, reservation_id: int, db: Session = Depends(database.get_db)):
     adherents = db.query(models.Adherent).all()
@@ -446,6 +462,7 @@ async def confirmer_reservation(request: Request, reservation_id: int, db: Sessi
         }
     )
 
+# Route pour supprimer une reservation
 @router.post("/reservations/{reservation_id}/supprimer")
 async def supprimer_reservation(request: Request, reservation_id: int, db: Session = Depends(database.get_db)):
     adherents = db.query(models.Adherent).all()

@@ -18,7 +18,6 @@ from backend.routes import admin, livres, recommandations, reservations, stats, 
 from backend.config import SECRET_KEY, templates
 
 # Téléchargement des ressources NLTK et initialisation des outils de traitement
-nltk.download('stopwords', quiet=True)
 nltk.download('punkt_tab', quiet=True)
 stemmer = PorterStemmer()
 

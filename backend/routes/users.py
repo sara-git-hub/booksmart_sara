@@ -58,6 +58,7 @@ async def register_submit(
         })
 
 
+# Route pour afficher la page de login
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
@@ -126,6 +127,7 @@ def home(request: Request, db: Session = Depends(database.get_db)):
         {"request": request, "livres": livres, "user": user}
     )
 
+# Route pour afficher le profil de l'adherent
 @router.get("/profil")
 async def profil(request: Request, db: Session = Depends(database.get_db)):
     user = crud.get_current_user(request, db)

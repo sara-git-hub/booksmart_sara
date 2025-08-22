@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 
 router = APIRouter(prefix="/admin", tags=["stats"],dependencies=[Depends(crud.admin_required)])
 
+# Routes pour afficher les statistiques
 @router.get("/statistiques")
 async def page_stats(request: Request):
     return templates.TemplateResponse("admin/statistiques.html", {"request": request})
