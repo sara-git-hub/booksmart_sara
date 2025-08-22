@@ -55,6 +55,7 @@ BookSmart est une application web développée avec FastAPI, permettant de gére
 
 ### 📊 Structure du projet
 
+```bash
 booksmart/
 │
 ├── backend/
