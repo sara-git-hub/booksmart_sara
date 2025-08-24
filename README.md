@@ -55,6 +55,8 @@ BookSmart est une application web développée avec FastAPI, permettant de gére
  - cosine_similarity
  - Joblib (sérialisation)
 
+**Jira:**
+ - https://sarabouabid.atlassian.net/jira/software/projects/BP/boards/166
 
 ### 📊 Structure du projet
 
@@ -109,3 +111,4 @@ booksmart/
 ├── requirements.txt              # Dépendances Python
 ├── README.md                     # Documentation projet
 └── run.sh                        # Script lancement local
+
